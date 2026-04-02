@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Churn Predictor</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+.header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 1.25rem 2rem; display: flex; align-items: center; gap: 12px; }
+.logo { width: 36px; height: 36px; border-radius: 8px; background: #1D9E75; display: flex; align-items: center; justify-content: center; }
+.logo svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; }
+h1 { font-size: 16px; font-weight: 500; }
+.subtitle { font-size: 13px; color: #666; margin-top: 2px; }
+.container { max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.5rem; }
+.card h2 { font-size: 12px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.25rem; }
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; }
+.field input, .field select { width: 100%; height: 36px; padding: 0 10px; border: 1px solid #e5e5e5; border-radius: 8px; background: #fafafa; color: #1a1a1a; font-size: 14px; }
+.field input:focus, .field select:focus { outline: none; border-color: #1D9E75; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn { width: 100%; height: 44px; background: #1D9E75; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 1rem; }
+.btn:hover { background: #0F6E56; }
+.result-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; display: none; }
+.result-card.show { display: block; }
+.result-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.result-label { font-size: 14px; font-weight: 500; color: #666; }
+.badge { padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+.badge.churn { background: #FCEBEB; color: #A32D2D; }
+.badge.stay { background: #EAF3DE; color: #3B6D11; }
+.meter-wrap { margin-bottom: 1.25rem; }
+.meter-label { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 6px; }
+.meter-bar { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.meter-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.meter-fill.high { background: #E24B4A; }
+.meter-fill.low { background: #639922; }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.stat { background: #f8f8f6; border-radius: 8px; padding: 12px; text-align: center; }
+.stat-val { font-size: 20px; font-weight: 500; margin-bottom: 2px; }
+.stat-key { font-size: 12px; color: #888; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+  <div><h1>Churn Predictor</h1><p class="subtitle">Telecom Customer Retention Intelligence</p></div>
+</div>
+<div class="container">
+  <div class="grid">
+    <div class="card">
+      <h2>Account Details</h2>
+      <div class="field-row">
+        <div class="field"><label>Gender</label><select id="gender"><option>Female</option><option>Male</option></select></div>
+        <div class="field"><label>Senior Citizen</label><select id="SeniorCitizen"><option value="0">No</option><option value="1">Yes</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Partner</label><select id="Partner"><option>Yes</option><option>No</option></select></div>
+        <div class="field"><label>Dependents</label><select id="Dependents"><option>No</option><option>Yes</option></select></div>
+      </div>
+      <div class="field"><label>Tenure (months)</label><input type="number" id="tenure" value="12"/></div>
+      <div class="field-row">
+        <div class="field"><label>Monthly Charges ($)</label><input type="number" id="MonthlyCharges" value="65.50" step="0.01"/></div>
+        <div class="field"><label>Total Charges ($)</label><input type="number" id="TotalCharges" value="786.00" step="0.01"/></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Service Details</h2>
+      <div class="field-row">
+        <div class="field"><label>Phone Service</label><select id="PhoneService"><option>Yes</option><option>No</option></select></div>
+        <div class="field"><label>Multiple Lines</label><select id="MultipleLines"><option>No</option><option>Yes</option><option>No phone service</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Internet Service</label><select id="InternetService"><option>Fiber optic</option><option>DSL</option><option>No</option></select></div>
+        <div class="field"><label>Online Security</label><select id="OnlineSecurity"><option>No</option><option>Yes</option><option>No internet service</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Tech Support</label><select id="TechSupport"><option>No</option><option>Yes</option><option>No internet service</option></select></div>
+        <div class="field"><label>Contract</label><select id="Contract"><option>Month-to-month</option><option>One year</option><option>Two year</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Paperless Billing</label><select id="PaperlessBilling"><option>Yes</option><option>No</option></select></div>
+        <div class="field"><label>Payment Method</label><select id="PaymentMethod"><option>Electronic check</option><option>Mailed check</option><option>Bank transfer (automatic)</option><option>Credit card (automatic)</option></select></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn" onclick="predict()">Run Churn Prediction</button>
+  <div class="result-card" id="resultCard">
+    <div class="result-top">
+      <div class="result-label">Prediction Result</div>
+      <div class="badge" id="badge"></div>
+    </div>
+    <div class="meter-wrap">
+      <div class="meter-label"><span>Churn Probability</span><span id="pct"></span></div>
+      <div class="meter-bar"><div class="meter-fill" id="fill"></div></div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="s1">—</div><div class="stat-key">Churn Probability</div></div>
+      <div class="stat"><div class="stat-val" id="s2">—</div><div class="stat-key">Prediction</div></div>
+      <div class="stat"><div class="stat-val" id="s3">—</div><div class="stat-key">Confidence</div></div>
+    </div>
+  </div>
+</div>
+<script>
+async function predict(){
+  const payload = {
+    gender: document.getElementById('gender').value,
+    SeniorCitizen: parseInt(document.getElementById('SeniorCitizen').value),
+    Partner: document.getElementById('Partner').value,
+    Dependents: document.getElementById('Dependents').value,
+    tenure: parseInt(document.getElementById('tenure').value),
+    PhoneService: document.getElementById('PhoneService').value,
+    MultipleLines: document.getElementById('MultipleLines').value,
+    InternetService: document.getElementById('InternetService').value,
+    OnlineSecurity: document.getElementById('OnlineSecurity').value,
+    OnlineBackup: 'No', DeviceProtection: 'No',
+    TechSupport: document.getElementById('TechSupport').value,
+    StreamingTV: 'No', StreamingMovies: 'No',
+    Contract: document.getElementById('Contract').value,
+    PaperlessBilling: document.getElementById('PaperlessBilling').value,
+    PaymentMethod: document.getElementById('PaymentMethod').value,
+    MonthlyCharges: parseFloat(document.getElementById('MonthlyCharges').value),
+    TotalCharges: parseFloat(document.getElementById('TotalCharges').value)
+  };
+  try {
+    const res = await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data = await res.json();
+    const prob = data.churn_probability;
+    const pct = Math.round(prob * 100);
+    const isChurn = data.churn_prediction === 1;
+    document.getElementById('badge').textContent = data.label;
+    document.getElementById('badge').className = 'badge ' + (isChurn ? 'churn' : 'stay');
+    document.getElementById('pct').textContent = pct + '%';
+    const fill = document.getElementById('fill');
+    fill.style.width = pct + '%';
+    fill.className = 'meter-fill ' + (pct > 50 ? 'high' : 'low');
+    document.getElementById('s1').textContent = pct + '%';
+    document.getElementById('s2').textContent = isChurn ? 'Churn' : 'Stay';
+    document.getElementById('s3').textContent = pct > 50 ? Math.round(prob*100)+'%' : Math.round((1-prob)*100)+'%';
+    document.getElementById('resultCard').classList.add('show');
+  } catch(e) { alert('API error — make sure server is running'); }
+}
+</script>
+</body>
+</html>
